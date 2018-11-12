@@ -1,0 +1,47 @@
+FROM jetbrains/teamcity-agent
+
+LABEL version="1.0"
+LABEL description="TeamCity Build Agent with Android Build tools"
+
+MAINTAINER Igor Wojda "igor.wojda@gmail.com"
+
+# Define script arguments
+##Newest version can found at https://developer.android.com/studio/ (Command line tools only section), however this DockerFile always updates sdkmanager
+ARG sdk_version=sdk-tools-linux-4333796.zip
+
+# Set environment variables
+ENV GRADLE_HOME=/usr/bin/gradle
+ENV PATH ${PATH}:/opt/tools
+ENV ANDROID_HOME /opt/android-sdk-linux
+ENV PATH ${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools
+
+# Install required tools
+# Dependencies to execute Android builds
+
+# Download Android sdk
+RUN cd /opt && \
+    curl --silent --show-error --location --fail --retry 3 https://dl.google.com/android/repository/${sdk_version} > /opt/android-tools.zip && \
+    ls  && \
+    unzip android-tools.zip -d android-sdk-linux && \
+    chown -R root.root android-sdk-linux
+
+# Workaround for
+# Warning: File /root/.android/repositories.cfg could not be loaded.
+RUN mkdir ~/.android \
+  && touch ~/.android/repositories.cfg
+
+#Accept all android sdk licences (remove a need to accept them manually during builds) and update sdkmanager
+RUN yes | sdkmanager --licenses && sdkmanager --update
+
+# Install platform and build tools and extra repositories
+RUN sdkmanager \
+  "tools" \
+  "platform-tools" \
+  "extras;android;m2repository" \
+  "extras;google;m2repository" \
+  "extras;google;google_play_services" \
+  "extras;google;instantapps" \
+  "build-tools;28.0.3"
+
+RUN which adb
+RUN which android

@@ -1,0 +1,21 @@
+version: "3.6"
+services:
+  teamcity-server:
+    image: jetbrains/teamcity-server
+    container_name: teamcity-server
+    ports:
+      - "8111:${PORT:-8111}"
+    volumes:
+      - ${DATA_PATH:-~/Docker/TeamCity/data/}:/data/teamcity_server/datadir
+      - ${LOGS_PATH:-~/Docker/TeamCity/logs/}:/opt/teamcity/logs
+  teamcity-agent:
+    build:
+      context: .
+      dockerfile: teamcity-agent-android-dockerfile
+    container_name: teamcity-agent_1
+    links:
+      - teamcity-server:teamcity-server
+    volumes:
+      - ${CONF_PATH:-~/Docker/TeamCity/agent/}:/data/teamcity_agent/conf
+    environment:
+      - SERVER_URL=http://teamcity-server:8111

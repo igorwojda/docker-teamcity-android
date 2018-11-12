@@ -1,0 +1,2 @@
+docker stop docker-teamcity_teamcity-server
+docker stop docker-teamcity_teamcity-agent_1
